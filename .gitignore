@@ -44,3 +44,5 @@ build/
 glove.6B.zip
 
 glove.6B.zip
+
+__pycache__/
