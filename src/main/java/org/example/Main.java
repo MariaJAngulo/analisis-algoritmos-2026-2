@@ -2,20 +2,35 @@ package org.example;
 
 import org.example.modelo.Articulo;
 import org.example.modelo.Corpus;
-import org.example.texto.Preprocesador;
+import org.example.similitud.ComparadorSimilitud;
+import org.example.similitud.ResultadoSimilitud;
 
 import java.util.List;
+import java.util.Scanner;
 
-/** Provisional (Fase 1): comprueba la carga del corpus. El menú llega en la Fase 5. */
+/** Provisional (Fase 2D): prueba el R1 por consola. El menú completo llega en la Fase 5. */
 public class Main {
     public static void main(String[] args) throws Exception {
-        List<Articulo> corpus = Corpus.cargar("datos/articulos.json");
-        System.out.println("Artículos cargados: " + corpus.size());
-        for (Articulo a : corpus) {
-            System.out.println(a.etiquetaCorta() + " | " + a.titulo + " | " + a.autoresTexto());
+        Corpus corpus = Corpus.desde("datos/articulos.json");
+        ComparadorSimilitud comparador = new ComparadorSimilitud(corpus.articulos(),
+                "datos/glove_corpus.txt", "datos/embeddings_minilm.json");
+
+        Scanner teclado = new Scanner(System.in);
+        while (true) {
+            System.out.print("\nIds de los artículos separados por coma (ej. 1, 4, 15), vacío para salir: ");
+            String linea = teclado.nextLine();
+            if (linea.trim().isEmpty()) {
+                break;
+            }
+            try {
+                List<Articulo> seleccion = ComparadorSimilitud.seleccionar(corpus, linea);
+                ResultadoSimilitud resultado = comparador.comparar(seleccion);
+                comparador.imprimir(resultado);
+                comparador.guardarCsv(resultado, "resultados/similitud.csv");
+                System.out.println("\nGuardado en resultados/similitud.csv");
+            } catch (IllegalArgumentException error) {
+                System.out.println("Error: " + error.getMessage());
+            }
         }
-        Preprocesador p = new Preprocesador();
-        System.out.println("\nTokens del artículo 1: " + p.tokenizar(corpus.get(0).resumen).size());
-        System.out.println("Normalizado (80 car.): " + p.normalizar(corpus.get(0).resumen).substring(0, 80));
     }
 }
