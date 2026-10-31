@@ -75,7 +75,7 @@ public class AnalisisClustering {
     }
 
     // "{1, 4, 15}" con los ids de los artículos de un clúster
-    private String ids(List<Integer> hojas) {
+    public String ids(List<Integer> hojas) {
         StringBuilder sb = new StringBuilder("{");
         for (int i = 0; i < hojas.size(); i++) {
             if (i > 0) {

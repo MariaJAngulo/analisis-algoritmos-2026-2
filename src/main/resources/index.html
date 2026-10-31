@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Análisis de algoritmos en bibliometría</title>
+<link rel="stylesheet" href="/estilo.css">
+</head>
+<body>
+<header class="barra"><div class="contenido"><a class="marca" href="/">Análisis de algoritmos en bibliometría</a></div></header>
+<main>
+  <section class="portada">
+    <div>
+      <h1>Cómo se parecen 20 artículos sobre IA en educación</h1>
+      <p class="lead">Compara sus resúmenes, agrúpalos en un árbol y busca cualquier frase dentro del texto. Los algoritmos están escritos desde cero.</p>
+    </div>
+    <figure class="extracto">
+      <blockquote><mark>Generative artificial intelligence</mark> provides both opportunities and challenges for higher education.</blockquote>
+      <figcaption>Primera frase del resumen del artículo 11, con el patrón «generative artificial intelligence» resaltado.</figcaption>
+    </figure>
+  </section>
+
+  <section class="herramientas" aria-label="Herramientas de análisis">
+    <article class="herramienta">
+      <svg class="icono" viewBox="0 0 76 52" aria-hidden="true">
+        <g fill="#2b4c8c">
+          <rect x="2" y="2" width="16" height="11" opacity="1"/><rect x="20" y="2" width="16" height="11" opacity=".18"/><rect x="38" y="2" width="16" height="11" opacity=".42"/><rect x="56" y="2" width="16" height="11" opacity=".12"/>
+          <rect x="2" y="15" width="16" height="11" opacity=".18"/><rect x="20" y="15" width="16" height="11" opacity="1"/><rect x="38" y="15" width="16" height="11" opacity=".26"/><rect x="56" y="15" width="16" height="11" opacity=".55"/>
+          <rect x="2" y="28" width="16" height="11" opacity=".42"/><rect x="20" y="28" width="16" height="11" opacity=".26"/><rect x="38" y="28" width="16" height="11" opacity="1"/><rect x="56" y="28" width="16" height="11" opacity=".3"/>
+          <rect x="2" y="41" width="16" height="9" opacity=".12"/><rect x="20" y="41" width="16" height="9" opacity=".55"/><rect x="38" y="41" width="16" height="9" opacity=".3"/><rect x="56" y="41" width="16" height="9" opacity="1"/>
+        </g>
+      </svg>
+      <h2>Similitud entre artículos</h2>
+      <p>Compara los resúmenes con cuatro algoritmos clásicos y dos modelos de IA (GloVe y MiniLM). Elige al menos dos ids.</p>
+      <form class="accion" action="/similitud" method="get">
+        <label class="etiqueta" for="ids">Ids de los artículos</label>
+        <input type="text" id="ids" name="ids" placeholder="1, 11, 15, 16" autocomplete="off" required>
+        <div class="ejemplos" data-destino="ids"><span>Probar:</span><button type="button">1, 11, 15, 16</button><button type="button">2, 5, 9</button></div>
+        <button type="submit" data-espera="Calculando…">Comparar artículos</button>
+      </form>
+    </article>
+
+    <article class="herramienta">
+      <svg class="icono" viewBox="0 0 76 52" aria-hidden="true">
+        <g fill="none" stroke="#14213d" stroke-width="2" stroke-linecap="square">
+          <path d="M6 6H30M6 18H30M30 6V18M30 12H48"/><path d="M6 32H22M6 44H22M22 32V44M22 38H48"/><path d="M48 12V38M48 25H70"/>
+        </g>
+      </svg>
+      <h2>Clustering jerárquico</h2>
+      <p>Agrupa los 20 artículos con tres criterios de enlace, dibuja los dendrogramas y señala cuál agrupa mejor.</p>
+      <div class="accion"><a class="boton" href="/clustering">Ver dendrogramas</a></div>
+    </article>
+
+    <article class="herramienta">
+      <svg class="icono" viewBox="0 0 76 52" aria-hidden="true">
+        <g fill="#c4ccdb"><rect x="2" y="6" width="68" height="6" rx="3"/><rect x="2" y="20" width="22" height="6" rx="3"/><rect x="52" y="20" width="18" height="6" rx="3"/><rect x="2" y="34" width="40" height="6" rx="3"/><rect x="56" y="34" width="14" height="6" rx="3"/></g>
+        <rect x="27" y="20" width="22" height="6" rx="3" fill="#ffd84d"/>
+        <rect x="46" y="34" width="8" height="6" rx="3" fill="#ffd84d"/>
+      </svg>
+      <h2>Búsqueda de patrones</h2>
+      <p>Busca una palabra o frase en los 20 resúmenes con KMP, Boyer-Moore y Rabin-Karp.</p>
+      <form class="accion" action="/buscar" method="get">
+        <label class="etiqueta" for="patron">Palabra o frase, en inglés</label>
+        <input type="text" id="patron" name="patron" placeholder="learning" autocomplete="off" required>
+        <div class="ejemplos" data-destino="patron"><span>Probar:</span><button type="button">learning</button><button type="button">generative</button><button type="button">artificial intelligence</button></div>
+        <button type="submit" data-espera="Buscando…">Buscar patrón</button>
+      </form>
+    </article>
+  </section>
+
+  <h2>Los 20 artículos</h2>
+  <p class="nota">Usa estos ids en la comparación de similitud.</p>
+  <!--ARTICULOS-->
+</main>
+<script>
+  // Los botones de ejemplo rellenan el campo; al enviar, el botón avisa que está trabajando.
+  document.querySelectorAll('.ejemplos').forEach(function (grupo) {
+    var campo = document.getElementById(grupo.dataset.destino);
+    grupo.querySelectorAll('button').forEach(function (boton) {
+      boton.addEventListener('click', function () { campo.value = boton.textContent; campo.focus(); });
+    });
+  });
+  document.querySelectorAll('form').forEach(function (formulario) {
+    formulario.addEventListener('submit', function () {
+      var enviar = formulario.querySelector('button[type=submit]');
+      if (enviar) { enviar.textContent = enviar.dataset.espera || 'Cargando…'; enviar.disabled = true; }
+    });
+  });
+  // Al volver con el botón "atrás", el navegador conserva la página: se restablecen los botones.
+  window.addEventListener('pageshow', function () {
+    document.querySelectorAll('button[type=submit]').forEach(function (b) { b.disabled = false; });
+  });
+</script>
+</body>
+</html>
