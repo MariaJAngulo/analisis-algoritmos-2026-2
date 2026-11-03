@@ -1,0 +1,7 @@
+target/
+resultados/
+.idea/
+.git/
+scripts/
+glove.6B.zip
+glove.6B.zip.part
