@@ -16,6 +16,12 @@
     </properties>
 
     <dependencies>
+        <!-- Solo la usa ExtractorPdf para leer el texto de los PDF -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>3.0.6</version>
+        </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>

@@ -15,14 +15,16 @@ public class Medidor {
         public final double minimoMs;
         public final double maximoMs;
         public final double desviacionMs;
+        public final double medianaMs;
         public final int repeticiones;
 
         Estadistica(double promedioMs, double minimoMs, double maximoMs,
-                    double desviacionMs, int repeticiones) {
+                    double desviacionMs, double medianaMs, int repeticiones) {
             this.promedioMs = promedioMs;
             this.minimoMs = minimoMs;
             this.maximoMs = maximoMs;
             this.desviacionMs = desviacionMs;
+            this.medianaMs = medianaMs;
             this.repeticiones = repeticiones;
         }
     }
@@ -44,6 +46,11 @@ public class Medidor {
         for (int i = 0; i < calentamiento; i++) {
             sumidero += consumir(tarea.get());
         }
+
+        // Limpiar la memoria antes de medir: así la basura que dejaron el
+        // calentamiento o la medición anterior no provoca una pausa del
+        // recolector de basura (GC) dentro de las repeticiones medidas.
+        System.gc();
 
         double[] tiempos = new double[repeticiones];
 
@@ -72,7 +79,14 @@ public class Medidor {
         }
         double desviacion = Math.sqrt(sumaCuadrados / repeticiones);
 
-        return new Estadistica(promedio, minimo, maximo, desviacion, repeticiones);
+        // Mediana: el tiempo del centro. A diferencia del promedio, no se deja
+        // arrastrar por unas pocas repeticiones lentas (por ejemplo, las que
+        // coinciden con una pausa del GC).
+        double[] ordenados = tiempos.clone();
+        java.util.Arrays.sort(ordenados);
+        double mediana = ordenados[repeticiones / 2];
+
+        return new Estadistica(promedio, minimo, maximo, desviacion, mediana, repeticiones);
     }
 
     private static int consumir(Object resultado) {
