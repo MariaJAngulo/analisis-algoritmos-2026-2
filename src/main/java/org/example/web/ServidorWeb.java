@@ -19,15 +19,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
 
 /**
  * Interfaz web mínima con el HttpServer que ya trae el JDK (sin frameworks).
  * Rutas: /  /similitud?ids=1,2,3  /clustering  /buscar?patron=...
- * El puerto sale de la variable de entorno PORT (8081 por defecto: el 8080 suele estar ocupado) y la carpeta de datos
- * de DATOS_DIR ("datos" por defecto). Cada ruta llama a las mismas clases que el menú de consola.
- * Las solicitudes se atienden de una en una: los vectores se guardan en mapas que no son
- * seguros para varios hilos, y para este uso basta.
+ * El puerto sale de la variable de entorno PORT, que la pone Render (8081 si no existe).
+ * Cada ruta llama a las mismas clases que el menú de consola.
  */
 public class ServidorWeb {
 
@@ -46,26 +43,21 @@ public class ServidorWeb {
     }
 
     public static void main(String[] args) throws Exception {
-        String variablePuerto = System.getenv("PORT");
-        int puerto = variablePuerto == null || variablePuerto.isBlank() ? 8081 : Integer.parseInt(variablePuerto.trim());
-        String variableDatos = System.getenv("DATOS_DIR");
-        String carpetaDatos = variableDatos == null || variableDatos.isBlank() ? "datos" : variableDatos.trim();
+        int puerto = 8081;
+        if (System.getenv("PORT") != null) {
+            puerto = Integer.parseInt(System.getenv("PORT"));
+        }
 
-        ServidorWeb aplicacion = new ServidorWeb(carpetaDatos);
+        ServidorWeb aplicacion = new ServidorWeb("datos");
         HttpServer servidor = HttpServer.create(new InetSocketAddress(puerto), 0);
-        servidor.createContext("/", aplicacion::atender);
-        servidor.setExecutor(Executors.newSingleThreadExecutor());
+        servidor.createContext("/", intercambio -> aplicacion.atender(intercambio));
         servidor.start();
-        System.out.println("Servidor listo en http://localhost:" + puerto + "  (datos: " + carpetaDatos + ")");
+        System.out.println("Servidor listo en http://localhost:" + puerto);
     }
 
     /** Un solo punto de entrada: según la ruta, arma la página y la envía. */
     private void atender(HttpExchange intercambio) throws IOException {
         try {
-            if (!intercambio.getRequestMethod().equals("GET")) {
-                enviar(intercambio, 405, "text/html; charset=utf-8", PaginasHtml.error("Solo se permite GET."));
-                return;
-            }
             String ruta = intercambio.getRequestURI().getPath();
             Map<String, String> parametros = parametros(intercambio.getRequestURI());
 

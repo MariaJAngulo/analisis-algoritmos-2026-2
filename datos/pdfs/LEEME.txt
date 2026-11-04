@@ -1,4 +1,0 @@
-Copie aquí los 20 PDF del corpus, con el nombre que empieza por su número
-("1. Artificial intelligence literacy ... .pdf", "2. ...", ...).
-Luego ejecute org.example.modelo.ExtractorPdf desde la raíz del proyecto.
-El resultado queda en datos/articulos_extraidos.json (no se sobrescribe datos/articulos.json).

@@ -10,7 +10,7 @@ import java.util.List;
  * 2. Se repite n-1 veces: buscar el par de clústeres más cercano según el enlace,
  *    unirlos en un clúster nuevo y registrar la fusión.
  * Cada búsqueda revisa todos los pares de artículos (O(n²)) y hay n-1 búsquedas: O(n³).
- * Con n = 20 es instantáneo y mucho más fácil de explicar que la fórmula de Lance-Williams.
+ * Con n = 20 artículos es instantáneo.
  */
 public class ClusteringJerarquico {
 

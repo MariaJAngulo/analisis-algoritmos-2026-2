@@ -60,28 +60,4 @@ public class Levenshtein implements Similitud {
         }
         return d;
     }
-
-    /** Imprime la matriz DP llena, solo si las dos listas tienen 12 tokens o menos. */
-    public void imprimirTraza(List<String> a, List<String> b) {
-        if (a.size() > 12 || b.size() > 12) {
-            System.out.println("(traza omitida: más de 12 tokens)");
-            return;
-        }
-        int[][] d = distancia(a, b);
-        System.out.println("Matriz de Levenshtein (filas = A, columnas = B)");
-        System.out.printf("%-12s %-12s", "", "");
-        for (String t : b) {
-            System.out.printf("%-12s", t);
-        }
-        System.out.println();
-        for (int i = 0; i <= a.size(); i++) {
-            System.out.printf("%-12s", i == 0 ? "" : a.get(i - 1));
-            for (int j = 0; j <= b.size(); j++) {
-                System.out.printf("%-12d", d[i][j]);
-            }
-            System.out.println();
-        }
-        System.out.printf("Distancia = %d, similitud = %.4f%n",
-                d[a.size()][b.size()], calcular(a, b));
-    }
 }

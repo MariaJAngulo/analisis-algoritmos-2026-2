@@ -7,6 +7,7 @@ import org.example.modelo.Articulo;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -21,15 +22,15 @@ public class EmbeddingMiniLM extends Embedding {
     /** Carga datos/embeddings_minilm.json con la forma { "id": [384 números] }. */
     public EmbeddingMiniLM(String ruta) throws IOException {
         JsonNode raiz = new ObjectMapper().readTree(new File(ruta));
-        var campos = raiz.fields();
-        while (campos.hasNext()) {
-            Map.Entry<String, JsonNode> campo = campos.next();
-            JsonNode numeros = campo.getValue();
+        Iterator<String> ids = raiz.fieldNames();
+        while (ids.hasNext()) {
+            String id = ids.next();
+            JsonNode numeros = raiz.get(id);
             double[] vector = new double[numeros.size()];
             for (int i = 0; i < vector.length; i++) {
                 vector[i] = numeros.get(i).asDouble();
             }
-            vectores.put(campo.getKey(), vector);
+            vectores.put(id, vector);
         }
     }
 
@@ -46,9 +47,5 @@ public class EmbeddingMiniLM extends Embedding {
                     + ". Vuelve a ejecutar scripts/generar_embeddings.py");
         }
         return vector;
-    }
-
-    public int dimension() {
-        return vectores.isEmpty() ? 0 : vectores.values().iterator().next().length;
     }
 }

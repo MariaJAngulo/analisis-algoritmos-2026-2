@@ -31,9 +31,10 @@ public class MainSeguimiento {
     private static final int[] TAMANOS = {1_000, 10_000, 100_000, 1_000_000};
     private static final int LIMITE_BUCKET_10 = 100_000; // más allá tarda demasiado (O(n^2))
     private static final long SEMILLA = 42;
+    private static final int CALENTAMIENTO_ESCALA = 2;
+    private static final int REPETICIONES_ESCALA = 7;
 
     public static void main(String[] args) throws Exception {
-        System.out.println("Working dir: " + new File("").getAbsolutePath());
         Locale.setDefault(Locale.US);
         new File("resultados").mkdirs();
 
@@ -72,8 +73,8 @@ public class MainSeguimiento {
         Ordenamiento[] algoritmos = {
                 new CountingSort(),
                 new RadixSort(),
-                new BucketSort(10),
-                new BucketSort(BucketSort.UNA_CUBETA_POR_FRECUENCIA)
+                new BucketSort(false), // 10 cubetas
+                new BucketSort(true)   // una cubeta por frecuencia
         };
 
         ResultadoOrden[] resultados = new ResultadoOrden[algoritmos.length];
@@ -93,7 +94,7 @@ public class MainSeguimiento {
         guardarTop(algoritmos, resultados, "resultados/top15.csv");
 
         // 6. Distribución de las cubetas
-        imprimirCubetas(new BucketSort(10), frecuencias, "resultados/cubetas_10.csv");
+        imprimirCubetas(frecuencias, "resultados/cubetas_10.csv");
 
         // 7. Tiempos sobre el corpus
         System.out.println("\n--- TIEMPOS SOBRE EL CORPUS (ms) ---");
@@ -118,53 +119,36 @@ public class MainSeguimiento {
         // 8. Escalabilidad
         //    Se reporta la MEDIANA (no el promedio) porque unas pocas repeticiones
         //    lentas, como las que coinciden con el recolector de basura, inflan el
-        //    promedio. También se imprime:
-        //    - ns/elem: mediana / n. Si el algoritmo es lineal debe quedar casi igual.
-        //    - x: cuántas veces creció el tiempo respecto al n anterior (n crece x10).
-        //      Lineal -> cerca de 10; cuadrático (Bucket Sort con 10 cubetas) -> cerca de 100.
-        System.out.println("\n--- ESCALABILIDAD: MEDIANA (ms) | ns por elemento | crecimiento ---");
-        System.out.printf("%-10s %-5s", "n", "k");
+        //    promedio. También se imprime ns por elemento (mediana / n): si el
+        //    algoritmo es lineal, ese valor queda casi igual aunque n crezca.
+        System.out.println("\n--- ESCALABILIDAD: MEDIANA (ms) | ns por elemento ---");
+        System.out.printf("%-10s", "n");
         for (Ordenamiento algoritmo : algoritmos) {
-            System.out.printf(" %34s", algoritmo.nombre());
+            System.out.printf(" %28s", algoritmo.nombre());
         }
         System.out.println();
 
-        double[] anterior = new double[algoritmos.length];
         try (PrintWriter csv = new PrintWriter("resultados/escalabilidad.csv", "UTF-8")) {
-            csv.println("n,k,algoritmo,mediana_ms,promedio_ms,desviacion_ms,ns_por_elemento,crecimiento");
+            csv.println("n,algoritmo,mediana_ms,promedio_ms,desviacion_ms,ns_por_elemento");
             for (int n : TAMANOS) {
                 ResultadoOrden datos = Escalabilidad.generar(n, frecuencias, SEMILLA);
-                int k = 0;
-                for (int f : datos.frecuencias) {
-                    k = Math.max(k, f + 1);
-                }
-                int calentamiento = n >= 1_000_000 ? 5 : 10;
-                int repeticiones = n >= 1_000_000 ? 20 : 30;
-
-                System.out.printf("%-10d %-5d", n, k);
+                System.out.printf("%-10d", n);
                 for (int a = 0; a < algoritmos.length; a++) {
-                    Ordenamiento algoritmo = algoritmos[a];
-                    boolean esBucket10 = algoritmo.nombre().equals("Bucket Sort (10 cubetas)");
-                    if (esBucket10 && n > LIMITE_BUCKET_10) {
-                        System.out.printf(" %34s", "(omitido)");
+                    // algoritmos[2] es Bucket Sort con 10 cubetas: es O(n^2) y con
+                    // un millón de datos tardaría demasiado, por eso se omite.
+                    if (a == 2 && n > LIMITE_BUCKET_10) {
+                        System.out.printf(" %28s", "(omitido)");
                         continue;
                     }
-                    int cal = esBucket10 && n >= 100_000 ? 1 : calentamiento;
-                    int rep = esBucket10 && n >= 100_000 ? 3 : repeticiones;
+                    Ordenamiento algoritmo = algoritmos[a];
                     Medidor.Estadistica e = Medidor.medir(
-                            () -> algoritmo.ordenar(datos.palabras, datos.frecuencias), cal, rep);
-
+                            () -> algoritmo.ordenar(datos.palabras, datos.frecuencias),
+                            CALENTAMIENTO_ESCALA, REPETICIONES_ESCALA);
                     double nsPorElemento = e.medianaMs * 1_000_000 / n;
-                    double crecimiento = anterior[a] > 0 ? e.medianaMs / anterior[a] : 0;
-                    anterior[a] = e.medianaMs;
 
-                    String texto = String.format("%.4f | %.1f ns", e.medianaMs, nsPorElemento);
-                    if (crecimiento > 0) {
-                        texto += String.format(" | x%.1f", crecimiento);
-                    }
-                    System.out.printf(" %34s", texto);
-                    csv.printf("%d,%d,%s,%.6f,%.6f,%.6f,%.2f,%.2f%n", n, k, algoritmo.nombre(),
-                            e.medianaMs, e.promedioMs, e.desviacionMs, nsPorElemento, crecimiento);
+                    System.out.printf(" %28s", String.format("%.4f | %.1f ns", e.medianaMs, nsPorElemento));
+                    csv.printf("%d,%s,%.6f,%.6f,%.6f,%.2f%n", n, algoritmo.nombre(),
+                            e.medianaMs, e.promedioMs, e.desviacionMs, nsPorElemento);
                 }
                 System.out.println();
             }
@@ -189,18 +173,6 @@ public class MainSeguimiento {
             }
             System.out.println();
         }
-
-        // Avisar si hay palabras empatadas con la última posición que quedan por fuera
-        ResultadoOrden r = resultados[0];
-        if (r.palabras.length > TOP && r.frecuencias[TOP] == r.frecuencias[TOP - 1]) {
-            StringBuilder fuera = new StringBuilder();
-            for (int i = TOP; i < r.palabras.length && r.frecuencias[i] == r.frecuencias[TOP - 1]; i++) {
-                fuera.append(r.palabras[i]).append(" ");
-            }
-            System.out.println("Empatadas con la posición " + TOP + " (frecuencia "
-                    + r.frecuencias[TOP - 1] + ") que quedan fuera por orden alfabético: "
-                    + fuera.toString().trim());
-        }
     }
 
     private static void guardarTop(Ordenamiento[] algoritmos, ResultadoOrden[] resultados,
@@ -222,10 +194,9 @@ public class MainSeguimiento {
         }
     }
 
-    private static void imprimirCubetas(BucketSort bucket, int[] frecuencias,
-                                        String archivo) throws IOException {
-        int[] tamanos = bucket.tamanosCubetas(frecuencias);
-        System.out.println("\n--- DISTRIBUCIÓN EN " + bucket.nombre().toUpperCase() + " ---");
+    private static void imprimirCubetas(int[] frecuencias, String archivo) throws IOException {
+        int[] tamanos = BucketSort.tamanosCubetas(frecuencias);
+        System.out.println("\n--- DISTRIBUCIÓN EN BUCKET SORT (10 CUBETAS) ---");
         try (PrintWriter csv = new PrintWriter(archivo, "UTF-8")) {
             csv.println("cubeta,palabras");
             for (int c = 0; c < tamanos.length; c++) {

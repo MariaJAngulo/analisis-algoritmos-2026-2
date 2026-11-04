@@ -34,8 +34,4 @@ public class MatrizDistancias {
     public int tamano() {
         return articulos.size();
     }
-
-    public List<Articulo> articulos() {
-        return articulos;
-    }
 }

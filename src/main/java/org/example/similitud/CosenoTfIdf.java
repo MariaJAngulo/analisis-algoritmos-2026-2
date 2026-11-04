@@ -4,6 +4,7 @@ import org.example.modelo.Articulo;
 import org.example.texto.Preprocesador;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -30,8 +31,8 @@ public class CosenoTfIdf implements Similitud {
         // df(t): en cuántos abstracts aparece cada término (una vez por abstract)
         Map<String, Integer> df = new HashMap<>();
         for (Articulo articulo : corpus) {
-            for (String termino : new java.util.HashSet<>(preprocesador.tokenizar(articulo.resumen))) {
-                df.merge(termino, 1, Integer::sum);
+            for (String termino : new HashSet<>(preprocesador.tokenizar(articulo.resumen))) {
+                df.put(termino, df.getOrDefault(termino, 0) + 1);
             }
         }
         for (Map.Entry<String, Integer> e : df.entrySet()) {
@@ -69,7 +70,7 @@ public class CosenoTfIdf implements Similitud {
     public Map<String, Double> vectorTfIdf(List<String> tokens) {
         Map<String, Integer> frecuencia = new HashMap<>();
         for (String t : tokens) {
-            frecuencia.merge(t, 1, Integer::sum);
+            frecuencia.put(t, frecuencia.getOrDefault(t, 0) + 1);
         }
         Map<String, Double> vector = new HashMap<>();
         for (Map.Entry<String, Integer> e : frecuencia.entrySet()) {
@@ -80,19 +81,14 @@ public class CosenoTfIdf implements Similitud {
     }
 
     /**
-     * Coseno entre dos vectores dispersos. El producto punto solo recorre los términos
-     * comunes (recorriendo el vector más corto). Si algún vector es nulo, devuelve 0.
+     * Coseno entre dos vectores guardados como mapas (término -> peso).
+     * Producto punto: para cada término de A se busca su peso en B (0 si no está).
+     * Si algún vector es nulo, devuelve 0.
      */
     public double coseno(Map<String, Double> a, Map<String, Double> b) {
-        Map<String, Double> menor = a.size() <= b.size() ? a : b;
-        Map<String, Double> mayor = menor == a ? b : a;
-
         double producto = 0;
-        for (Map.Entry<String, Double> e : menor.entrySet()) {
-            Double otro = mayor.get(e.getKey());
-            if (otro != null) {
-                producto += e.getValue() * otro;
-            }
+        for (String termino : a.keySet()) {
+            producto += a.get(termino) * b.getOrDefault(termino, 0.0);
         }
         double normaA = norma(a);
         double normaB = norma(b);
@@ -108,35 +104,5 @@ public class CosenoTfIdf implements Similitud {
             suma += peso * peso;
         }
         return Math.sqrt(suma);
-    }
-
-    /** Imprime tf, idf y pesos de cada término y el coseno. Solo con 12 tokens o menos. */
-    public void imprimirTraza(List<String> a, List<String> b) {
-        if (a.size() > 12 || b.size() > 12) {
-            System.out.println("(traza omitida: más de 12 tokens)");
-            return;
-        }
-        Map<String, Double> va = vectorTfIdf(a);
-        Map<String, Double> vb = vectorTfIdf(b);
-
-        java.util.TreeSet<String> terminos = new java.util.TreeSet<>(va.keySet());
-        terminos.addAll(vb.keySet());
-
-        System.out.printf("%-14s %8s %8s %8s %8s %8s%n", "término", "idf", "tf A", "tf B", "peso A", "peso B");
-        double producto = 0;
-        for (String t : terminos) {
-            double pa = va.getOrDefault(t, 0.0);
-            double pb = vb.getOrDefault(t, 0.0);
-            double tfA = (double) java.util.Collections.frequency(a, t) / a.size();
-            double tfB = (double) java.util.Collections.frequency(b, t) / b.size();
-            System.out.printf("%-14s %8.4f %8.4f %8.4f %8.4f %8.4f%n", t, idf(t), tfA, tfB, pa, pb);
-            producto += pa * pb;
-        }
-        double na = norma(va);
-        double nb = norma(vb);
-        double cos = coseno(va, vb);
-        System.out.printf("Producto punto = %.6f, |A| = %.6f, |B| = %.6f%n", producto, na, nb);
-        System.out.printf("Coseno = %.4f, ángulo = %.2f°%n", cos,
-                Math.toDegrees(Math.acos(Math.min(1.0, Math.max(-1.0, cos)))));
     }
 }

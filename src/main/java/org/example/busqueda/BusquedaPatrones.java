@@ -71,29 +71,21 @@ public class BusquedaPatrones {
             }
         }
 
-        // Tiempos: cada repetición recorre los 20 abstracts y suma preprocesamiento y búsqueda por separado
+        // Tiempos: cada repetición recorre los 20 abstracts.
+        // Medidor da el tiempo total; aparte se promedian preprocesamiento y búsqueda.
         double[] preNs = new double[nAlgoritmos];
         double[] busNs = new double[nAlgoritmos];
         Medidor.Estadistica[] total = new Medidor.Estadistica[nAlgoritmos];
         for (int a = 0; a < nAlgoritmos; a++) {
             BuscadorPatron buscador = buscadores[a];
-            List<long[]> corridas = new ArrayList<>(); // {preprocesamiento, búsqueda} de cada repetición
-            total[a] = Medidor.medir(() -> {
-                long pre = 0;
-                long bus = 0;
+            total[a] = Medidor.medir(() -> buscarEnTodos(buscador, p), CALENTAMIENTO, REPETICIONES);
+
+            for (int rep = 0; rep < REPETICIONES; rep++) {
                 for (int i = 0; i < nArticulos; i++) {
                     ResultadoBusqueda res = buscador.buscar(textos[i], p);
-                    pre += res.preprocesamientoNs;
-                    bus += res.busquedaNs;
+                    preNs[a] += res.preprocesamientoNs;
+                    busNs[a] += res.busquedaNs;
                 }
-                corridas.add(new long[]{pre, bus});
-                return pre + bus;
-            }, CALENTAMIENTO, REPETICIONES);
-
-            // Las primeras corridas son de calentamiento: solo se promedian las medidas
-            for (int c = CALENTAMIENTO; c < corridas.size(); c++) {
-                preNs[a] += corridas.get(c)[0];
-                busNs[a] += corridas.get(c)[1];
             }
             preNs[a] /= REPETICIONES;
             busNs[a] /= REPETICIONES;
@@ -101,6 +93,15 @@ public class BusquedaPatrones {
 
         return new ResultadoBusquedaPatron(patron, articulos, posiciones, nombres, coincidencias,
                 comparaciones, colisiones, preNs, busNs, total, iguales);
+    }
+
+    // Busca el patrón en los 20 abstracts (lo que se mide como tiempo total)
+    private int buscarEnTodos(BuscadorPatron buscador, char[] p) {
+        int encontradas = 0;
+        for (char[] texto : textos) {
+            encontradas += buscador.buscar(texto, p).posiciones.size();
+        }
+        return encontradas;
     }
 
     // ---------------------------------------------------------------- consola

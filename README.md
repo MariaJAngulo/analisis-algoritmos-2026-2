@@ -38,7 +38,7 @@ Se guardan en `resultados/`:
 - `top15.csv`: top 15 de cada algoritmo
 - `tiempos_corpus.csv`: promedio, mínimo, máximo y desviación (ms)
 - `cubetas_10.csv`: palabras por cubeta en Bucket Sort con 10 cubetas
-- `escalabilidad.csv`: mediana, promedio, ns por elemento y factor de crecimiento vs n
+- `escalabilidad.csv`: mediana, promedio, desviación y ns por elemento para cada n
 
 ## Extracción de los abstracts (PDF -> JSON)
 
@@ -55,9 +55,8 @@ mvn compile exec:java -Dexec.mainClass=org.example.modelo.ExtractorPdf
 Por cada PDF se leen las 2 primeras páginas, se unen las palabras cortadas con guion,
 el abstract empieza después de la palabra "Abstract" (o "A B S T R A C T") y termina en
 "Keywords", "Index Terms", "Introduction" o el símbolo ©. El título y los autores se toman
-de los metadatos del PDF. La salida queda en `datos/articulos_extraidos.json` y el programa
-imprime, para cada artículo, la similitud de Jaccard con el abstract guardado en
-`datos/articulos.json` (los menores a 0,90 se marcan para revisar a mano).
+de los metadatos del PDF. La salida queda en `datos/articulos_extraidos.json`
+(no sobrescribe `datos/articulos.json`).
 
 ## Escalabilidad y recolector de basura
 

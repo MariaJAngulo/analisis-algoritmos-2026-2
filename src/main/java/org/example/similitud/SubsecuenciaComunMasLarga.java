@@ -50,28 +50,4 @@ public class SubsecuenciaComunMasLarga implements Similitud {
         }
         return c;
     }
-
-    /** Imprime la matriz DP llena, solo si las dos listas tienen 12 tokens o menos. */
-    public void imprimirTraza(List<String> a, List<String> b) {
-        if (a.size() > 12 || b.size() > 12) {
-            System.out.println("(traza omitida: más de 12 tokens)");
-            return;
-        }
-        int[][] c = matriz(a, b);
-        System.out.println("Matriz LCS (filas = A, columnas = B)");
-        System.out.printf("%-12s %-12s", "", "");
-        for (String t : b) {
-            System.out.printf("%-12s", t);
-        }
-        System.out.println();
-        for (int i = 0; i <= a.size(); i++) {
-            System.out.printf("%-12s", i == 0 ? "" : a.get(i - 1));
-            for (int j = 0; j <= b.size(); j++) {
-                System.out.printf("%-12d", c[i][j]);
-            }
-            System.out.println();
-        }
-        System.out.printf("LCS = %d, similitud = %.4f%n",
-                c[a.size()][b.size()], calcular(a, b));
-    }
 }

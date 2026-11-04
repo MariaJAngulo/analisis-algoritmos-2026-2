@@ -14,9 +14,8 @@ Salidas:
 
 Modelo A: GloVe glove.6B.100d (Stanford NLP, Pennington et al. 2014).
           100 dimensiones, embeddings de PALABRAS estáticos.
-          Descarga: https://nlp.stanford.edu/data/glove.6B.zip o su espejo en Hugging Face
-          (stanfordnlp/glove), ~822 MB, se hace una vez.
-          Si ya tienes glove.6B.zip en la carpeta del proyecto, se usa ese archivo.
+          Descárgalo una vez (~822 MB) desde https://nlp.stanford.edu/data/glove.6B.zip
+          y deja glove.6B.zip en la raíz del proyecto.
 Modelo B: Sentence-BERT all-MiniLM-L6-v2 (Reimers y Gurevych, 2019).
           384 dimensiones, embeddings de FRASE contextuales.
           Descarga automática desde Hugging Face con la librería sentence-transformers.
@@ -25,17 +24,11 @@ import json
 import os
 import re
 import sys
-import socket
-import urllib.request
 import zipfile
 
 RUTA_JSON = "datos/articulos.json"
 ZIP_GLOVE = "glove.6B.zip"
-# Se prueban en orden; el segundo es el espejo oficial de Stanford en Hugging Face.
-URLS_GLOVE = [
-    "https://huggingface.co/stanfordnlp/glove/resolve/main/glove.6B.zip",
-    "https://nlp.stanford.edu/data/glove.6B.zip",
-]
+URL_GLOVE = "https://nlp.stanford.edu/data/glove.6B.zip"
 SALIDA_GLOVE = "datos/glove_corpus.txt"
 SALIDA_MINILM = "datos/embeddings_minilm.json"
 
@@ -54,31 +47,13 @@ def palabras_del_corpus(articulos):
     return vocabulario
 
 
-def descargar_glove():
-    """Prueba cada URL hasta lograr bajar el zip. Se guarda como .part y se renombra al final,
-    así un corte de red no deja un zip incompleto que parezca válido."""
-    socket.setdefaulttimeout(60)
-    parcial = ZIP_GLOVE + ".part"
-    for url in URLS_GLOVE:
-        try:
-            print(f"[GloVe] descargando {url} (~822 MB, solo la primera vez)...")
-            urllib.request.urlretrieve(url, parcial)
-            os.replace(parcial, ZIP_GLOVE)
-            return
-        except Exception as error:
-            print(f"[GloVe] falló esa URL: {error}")
-    if os.path.exists(parcial):
-        os.remove(parcial)
-    sys.exit("No se pudo descargar GloVe. Bájalo con el navegador desde alguna de estas URL "
-             "y deja glove.6B.zip en la raíz del proyecto:\n  " + "\n  ".join(URLS_GLOVE))
-
-
 def generar_glove(articulos):
     vocabulario = palabras_del_corpus(articulos)
     print(f"[GloVe] palabras distintas en los abstracts: {len(vocabulario)}")
 
     if not os.path.exists(ZIP_GLOVE):
-        descargar_glove()
+        sys.exit("Falta glove.6B.zip. Descárgalo con el navegador desde\n  " + URL_GLOVE
+                 + "\ny déjalo en la raíz del proyecto.")
 
     encontradas = 0
     with zipfile.ZipFile(ZIP_GLOVE) as z, \

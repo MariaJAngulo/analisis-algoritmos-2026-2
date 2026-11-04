@@ -81,12 +81,4 @@ public class EmbeddingGlove extends Embedding {
         }
         return suma;
     }
-
-    public int palabrasEnDiccionario() {
-        return diccionario.size();
-    }
-
-    public int dimension() {
-        return dimension;
-    }
 }

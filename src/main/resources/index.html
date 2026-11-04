@@ -35,8 +35,8 @@
       <form class="accion" action="/similitud" method="get">
         <label class="etiqueta" for="ids">Ids de los artículos</label>
         <input type="text" id="ids" name="ids" placeholder="1, 11, 15, 16" autocomplete="off" required>
-        <div class="ejemplos" data-destino="ids"><span>Probar:</span><button type="button">1, 11, 15, 16</button><button type="button">2, 5, 9</button></div>
-        <button type="submit" data-espera="Calculando…">Comparar artículos</button>
+        <div class="ejemplos"><span>Probar:</span><a href="/similitud?ids=1,11,15,16">1, 11, 15, 16</a><a href="/similitud?ids=2,5,9">2, 5, 9</a></div>
+        <button type="submit">Comparar artículos</button>
       </form>
     </article>
 
@@ -62,8 +62,8 @@
       <form class="accion" action="/buscar" method="get">
         <label class="etiqueta" for="patron">Palabra o frase, en inglés</label>
         <input type="text" id="patron" name="patron" placeholder="learning" autocomplete="off" required>
-        <div class="ejemplos" data-destino="patron"><span>Probar:</span><button type="button">learning</button><button type="button">generative</button><button type="button">artificial intelligence</button></div>
-        <button type="submit" data-espera="Buscando…">Buscar patrón</button>
+        <div class="ejemplos"><span>Probar:</span><a href="/buscar?patron=learning">learning</a><a href="/buscar?patron=generative">generative</a><a href="/buscar?patron=artificial+intelligence">artificial intelligence</a></div>
+        <button type="submit">Buscar patrón</button>
       </form>
     </article>
   </section>
@@ -72,24 +72,5 @@
   <p class="nota">Usa estos ids en la comparación de similitud.</p>
   <!--ARTICULOS-->
 </main>
-<script>
-  // Los botones de ejemplo rellenan el campo; al enviar, el botón avisa que está trabajando.
-  document.querySelectorAll('.ejemplos').forEach(function (grupo) {
-    var campo = document.getElementById(grupo.dataset.destino);
-    grupo.querySelectorAll('button').forEach(function (boton) {
-      boton.addEventListener('click', function () { campo.value = boton.textContent; campo.focus(); });
-    });
-  });
-  document.querySelectorAll('form').forEach(function (formulario) {
-    formulario.addEventListener('submit', function () {
-      var enviar = formulario.querySelector('button[type=submit]');
-      if (enviar) { enviar.textContent = enviar.dataset.espera || 'Cargando…'; enviar.disabled = true; }
-    });
-  });
-  // Al volver con el botón "atrás", el navegador conserva la página: se restablecen los botones.
-  window.addEventListener('pageshow', function () {
-    document.querySelectorAll('button[type=submit]').forEach(function (b) { b.disabled = false; });
-  });
-</script>
 </body>
 </html>

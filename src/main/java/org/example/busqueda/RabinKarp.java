@@ -13,19 +13,9 @@ import java.util.List;
  */
 public class RabinKarp implements BuscadorPatron {
 
-    public static final long PRIMO_GRANDE = 1_000_000_007L;
-    public static final long PRIMO_TRAZA = 101L; // pequeño: provoca colisiones que se pueden mostrar
+    private static final long PRIMO_GRANDE = 1_000_000_007L;
+    private static final long PRIMO_TRAZA = 101L; // pequeño: provoca colisiones que se pueden mostrar
     private static final long BASE = 256;
-
-    private final long primo;
-
-    public RabinKarp() {
-        this(PRIMO_GRANDE);
-    }
-
-    public RabinKarp(long primo) {
-        this.primo = primo;
-    }
 
     @Override
     public String nombre() {
@@ -34,7 +24,7 @@ public class RabinKarp implements BuscadorPatron {
 
     @Override
     public ResultadoBusqueda buscar(char[] t, char[] p) {
-        return buscar(t, p, primo, false);
+        return buscar(t, p, PRIMO_GRANDE, false);
     }
 
     private ResultadoBusqueda buscar(char[] t, char[] p, long q, boolean traza) {

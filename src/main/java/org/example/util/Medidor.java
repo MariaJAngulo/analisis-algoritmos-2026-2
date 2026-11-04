@@ -1,5 +1,6 @@
 package org.example.util;
 
+import java.util.Arrays;
 import java.util.function.Supplier;
 
 /**
@@ -29,22 +30,15 @@ public class Medidor {
         }
     }
 
-    // Evita que la JVM elimine las llamadas por considerarlas inútiles
-    private static long sumidero = 0;
+    // Aquí se guarda el resultado de cada ejecución. Si nadie usara el
+    // resultado, Java podría saltarse el cálculo y el tiempo saldría falso.
+    public static Object ultimoResultado;
 
-    /** Mide un Runnable (algoritmo sin resultado que devolver). */
-    public static Estadistica medir(Runnable tarea, int calentamiento, int repeticiones) {
-        return medir(() -> {
-            tarea.run();
-            return Boolean.TRUE;
-        }, calentamiento, repeticiones);
-    }
-
-    /** Mide un Supplier: el resultado se consume para que la JVM no descarte el trabajo. */
+    /** Ejecuta la tarea "calentamiento" veces sin medir y luego "repeticiones" veces midiendo. */
     public static Estadistica medir(Supplier<?> tarea, int calentamiento, int repeticiones) {
 
         for (int i = 0; i < calentamiento; i++) {
-            sumidero += consumir(tarea.get());
+            ultimoResultado = tarea.get();
         }
 
         // Limpiar la memoria antes de medir: así la basura que dejaron el
@@ -56,10 +50,9 @@ public class Medidor {
 
         for (int i = 0; i < repeticiones; i++) {
             long inicio = System.nanoTime();
-            Object resultado = tarea.get();
+            ultimoResultado = tarea.get();
             long fin = System.nanoTime();
 
-            sumidero += consumir(resultado);
             tiempos[i] = (fin - inicio) / 1_000_000.0;
         }
 
@@ -83,13 +76,9 @@ public class Medidor {
         // arrastrar por unas pocas repeticiones lentas (por ejemplo, las que
         // coinciden con una pausa del GC).
         double[] ordenados = tiempos.clone();
-        java.util.Arrays.sort(ordenados);
+        Arrays.sort(ordenados);
         double mediana = ordenados[repeticiones / 2];
 
         return new Estadistica(promedio, minimo, maximo, desviacion, mediana, repeticiones);
-    }
-
-    private static int consumir(Object resultado) {
-        return resultado == null ? 0 : resultado.hashCode() & 1;
     }
 }
