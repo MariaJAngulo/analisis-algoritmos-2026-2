@@ -13,29 +13,12 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-/**
- * Extrae el título, los autores y el abstract de los PDF del corpus
- * y los guarda en un archivo JSON con el mismo formato que lee Corpus.
- *
- * Uso: java org.example.modelo.ExtractorPdf
- * Lee datos/pdfs y escribe datos/articulos_extraidos.json
- * (no sobrescribe datos/articulos.json).
- *
- * Pasos para cada PDF:
- * 1. PDFBox lee el texto de las 2 primeras páginas (ahí está el abstract).
- * 2. Se unen las palabras cortadas con guion al final de una línea.
- * 3. El abstract empieza después de la palabra "abstract".
- * 4. Termina en la primera de estas palabras que aparezca después:
- *    "keywords", "key words", "index terms", "introduction" o "©".
- * 5. Título y autores salen de los metadatos del PDF; si no hay título,
- *    se usa el nombre del archivo.
- */
 public class ExtractorPdf {
 
     private static final int PAGINAS_A_LEER = 2;
     private static final int LARGO_MAXIMO = 3000; // si no se encuentra el final
-    private static final String[] PALABRAS_FIN = {"keywords", "key words", "index terms", "introduction", "©"};
+    private static final int MINIMO = 100;        // un abstract tiene al menos 100 caracteres
+    private static final String[] PALABRAS_FIN = {"\nkeywords", "\nkey words", "\nindex terms", "introduction", "©"};
 
     public static void main(String[] args) throws IOException {
         File carpeta = new File("datos/pdfs");
@@ -79,15 +62,17 @@ public class ExtractorPdf {
 
     /** Recorta el abstract del texto de las primeras páginas. */
     static String extraerAbstract(String texto) {
+        texto = texto.replace("\r\n", "\n");   // en Windows los saltos de línea son \r\n
         // Une palabras cortadas al final de la línea: "algo-\nritmo" -> "algoritmo"
-        texto = texto.replace("-\r\n", "").replace("-\n", "");
+        texto = texto.replace("-\n", "");
         String minusculas = texto.toLowerCase();
 
-        // Elsevier escribe la palabra con espacios: "A B S T R A C T"
-        String marca = "abstract";
+        // Elsevier escribe el título con espacios: "A B S T R A C T". Se busca primero,
+        // porque en esos artículos la palabra "abstract" también aparece en el texto.
+        String marca = "a b s t r a c t";
         int inicio = minusculas.indexOf(marca);
         if (inicio == -1) {
-            marca = "a b s t r a c t";
+            marca = "abstract";
             inicio = minusculas.indexOf(marca);
         }
         if (inicio == -1) {
@@ -99,7 +84,9 @@ public class ExtractorPdf {
         int hasta = Math.min(texto.length(), desde + LARGO_MAXIMO);
         for (String palabra : PALABRAS_FIN) {
             int posicion = minusculas.indexOf(palabra, desde);
-            if (posicion != -1 && posicion < hasta) {
+            // Se ignora si aparece pegada al título (en algunos PDF las palabras
+            // clave quedan justo después de "Abstract" por las dos columnas)
+            if (posicion > desde + MINIMO && posicion < hasta) {
                 hasta = posicion;
             }
         }
